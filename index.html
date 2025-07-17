@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Laughing Criminal 😈❤️</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Chewy&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Tone.js for sound -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    
+    <!-- Three.js for 3D effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        /* Custom Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FFF5F7;
+            color: #1f2937;
+            overflow-x: hidden;
+        }
+
+        .font-pacifico { font-family: 'Pacifico', cursive; }
+        .font-chewy { font-family: 'Chewy', cursive; }
+
+        /* 3D Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Place it behind all content */
+        }
+
+        /* Page transition styles */
+        .page { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .page.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Heart trail and explosion styles */
+        .heart-particle { position: absolute; pointer-events: none; z-index: 9999; color: #ec4899; }
+        .heart-trail { animation: fadeOutScale 1s forwards; }
+        .heart-explosion { animation: explode 0.7s forwards; }
+        @keyframes fadeOutScale { from { opacity: 1; transform: scale(0.5); } to { opacity: 0; transform: scale(1.5); } }
+        @keyframes explode { 0% { transform: scale(0.5) translateY(0); opacity: 1; } 100% { transform: scale(1) translateY(-80px); opacity: 0; } }
+
+        /* Flip card styles */
+        .perspective-1000 { perspective: 1000px; }
+        .preserve-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+
+        /* Modal styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal-content { background: white; padding: 2rem; border-radius: 1rem; transform: scale(0.9); transition: transform 0.3s ease; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+
+        /* Roast Carousel Styles */
+        .carousel-container {
+            overflow: hidden;
+            position: relative;
+            height: 120px; /* Adjust height as needed */
+        }
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+        .carousel-slide {
+            min-width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 120px;
+        }
+    </style>
+</head>
+<body class="bg-[#FFF5F7]">
+    
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Music Toggle Button -->
+    <button id="music-toggle" class="fixed bottom-4 right-4 bg-pink-500 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center z-50 hover:bg-pink-600 transition-colors">
+        <i data-lucide="music" class="w-6 h-6"></i>
+    </button>
+
+    <!-- "Unlock the Love" Modal -->
+    <div id="love-modal" class="modal-overlay">
+        <div class="modal-content text-center max-w-sm">
+            <span class="text-5xl">💖</span>
+            <h2 class="font-chewy text-3xl text-pink-600 mt-4">You Unlocked It!</h2>
+            <p class="mt-2 text-lg text-gray-700">Okay, jokes aside for a second...</p>
+            <p class="mt-4 font-bold text-xl text-gray-800">You are my absolute favorite person, and that laugh of yours is the best sound in the world. I love you more than anything.</p>
+            <button id="close-modal-btn" class="mt-6 bg-pink-500 text-white font-bold py-2 px-6 rounded-full hover:bg-pink-600">Close</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="flex relative z-10">
+        <!-- Desktop Sidebar -->
+        <aside class="hidden md:block w-64 min-h-screen bg-white/80 backdrop-blur-sm shadow-lg p-6 space-y-4 sticky top-0">
+            <h1 class="font-pacifico text-3xl text-pink-600 mb-8 text-center">My Laughing Criminal 😈❤️</h1>
+            <nav id="desktop-nav" class="space-y-2">
+                <button data-page="home" class="nav-button w-full flex items-center space-x-3 p-3 rounded-lg transition-all text-left bg-pink-500 text-white shadow-md"><i data-lucide="laugh" class="w-5 h-5"></i><span>Ugh, It’s You</span></button>
+                <button data-page="about" class="nav-button w-full flex items-center space-x-3 p-3 rounded-lg transition-all text-left hover:bg-pink-100"><i data-lucide="mic" class="w-5 h-5"></i><span>Teasing Queen</span></button>
+                <button data-page="gallery" class="nav-button w-full flex items-center space-x-3 p-3 rounded-lg transition-all text-left hover:bg-pink-100"><i data-lucide="image" class="w-5 h-5"></i><span>Proof of Survival</span></button>
+                <button data-page="roast" class="nav-button w-full flex items-center space-x-3 p-3 rounded-lg transition-all text-left hover:bg-pink-100"><i data-lucide="medal" class="w-5 h-5"></i><span>Roast Zone</span></button>
+                <button data-page="love" class="nav-button w-full flex items-center space-x-3 p-3 rounded-lg transition-all text-left hover:bg-pink-100"><i data-lucide="heart" class="w-5 h-5"></i><span>Secret Love Notes</span></button>
+                <button data-page="extra" class="nav-button w-full flex items-center space-x-3 p-3 rounded-lg transition-all text-left hover:bg-pink-100"><i data-lucide="sparkles" class="w-5 h-5"></i><span>Extra Love</span></button>
+                <button data-page="contact" class="nav-button w-full flex items-center space-x-3 p-3 rounded-lg transition-all text-left hover:bg-pink-100"><i data-lucide="mail" class="w-5 h-5"></i><span>Send a Roast</span></button>
+            </nav>
+        </aside>
+
+        <!-- Mobile Header -->
+        <header class="md:hidden fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm z-40 p-4 flex justify-between items-center shadow-md">
+            <h1 class="font-pacifico text-2xl text-pink-600">My Laughing Criminal</h1>
+            <button id="menu-toggle" class="z-50"><i data-lucide="menu" class="w-7 h-7"></i></button>
+        </header>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden fixed inset-0 bg-white/95 backdrop-blur-sm z-30 pt-20 px-8 md:hidden">
+             <nav id="mobile-nav" class="flex flex-col space-y-6">
+                <button data-page="home" class="nav-button flex items-center space-x-4 text-xl p-2 rounded-lg transition-all bg-pink-200 text-pink-700"><i data-lucide="laugh" class="w-6 h-6"></i><span>Ugh, It’s You</span></button>
+                <button data-page="about" class="nav-button flex items-center space-x-4 text-xl p-2 rounded-lg transition-all hover:bg-pink-100"><i data-lucide="mic" class="w-6 h-6"></i><span>Teasing Queen</span></button>
+                <button data-page="gallery" class="nav-button flex items-center space-x-4 text-xl p-2 rounded-lg transition-all hover:bg-pink-100"><i data-lucide="image" class="w-6 h-6"></i><span>Proof of Survival</span></button>
+                <button data-page="roast" class="nav-button flex items-center space-x-4 text-xl p-2 rounded-lg transition-all hover:bg-pink-100"><i data-lucide="medal" class="w-6 h-6"></i><span>Roast Zone</span></button>
+                <button data-page="love" class="nav-button flex items-center space-x-4 text-xl p-2 rounded-lg transition-all hover:bg-pink-100"><i data-lucide="heart" class="w-6 h-6"></i><span>Secret Love Notes</span></button>
+                <button data-page="extra" class="nav-button flex items-center space-x-4 text-xl p-2 rounded-lg transition-all hover:bg-pink-100"><i data-lucide="sparkles" class="w-6 h-6"></i><span>Extra Love</span></button>
+                <button data-page="contact" class="nav-button flex items-center space-x-4 text-xl p-2 rounded-lg transition-all hover:bg-pink-100"><i data-lucide="mail" class="w-6 h-6"></i><span>Send a Roast</span></button>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 p-4 sm:p-8 mt-16 md:mt-0">
+            <!-- All pages will be injected here. The content remains the same, but the Roast Zone is updated. -->
+            
+            <!-- Home Page -->
+            <div id="home" class="page active">
+                <div class="flex flex-col items-center justify-center h-[80vh] text-center">
+                    <div class="animate-bounce"><span class="text-8xl">😒</span></div>
+                    <h1 id="greeting-header" class="font-chewy text-4xl md:text-6xl mt-8 text-gray-700">Hey Trouble!</h1>
+                    <p id="greeting-subheader" class="text-xl md:text-2xl mt-2 text-gray-500">Why are you here again?</p>
+                    <button data-page="about" class="nav-button mt-12 bg-pink-500 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:bg-pink-600 transition-all flex items-center space-x-3 text-xl hover:scale-105 hover:rotate-1 active:scale-95"><span>Enter RoastLand</span><span class="text-2xl">💥</span></button>
+                </div>
+            </div>
+
+            <!-- About Page -->
+            <div id="about" class="page">
+                 <div class="max-w-4xl mx-auto">
+                    <h1 class="font-chewy text-4xl md:text-5xl text-center mb-8 text-pink-600">My Teasing Queen 👑</h1>
+                    <div class="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl flex flex-col md:flex-row items-center gap-8">
+                        <img src="https://placehold.co/300x300/FBCFE8/E11D48?text=😜" alt="Cartoon of girlfriend" class="rounded-full w-48 h-48 md:w-60 md:h-60 object-cover shadow-lg border-4 border-pink-200 hover:rotate-6 hover:scale-105 transition-transform duration-300">
+                        <div class="space-y-4 text-lg">
+                            <p><strong>Official Title:</strong> Serial Roaster (Level 999+)</p>
+                            <p><strong>Special Skill:</strong> Laughs before the joke even ends.</p>
+                            <p><strong>Love Language:</strong> Insult → Hug → Repeat.</p>
+                            <p><strong>Favorite Pastime:</strong> Finding new, creative ways to call me a dork.</p>
+                            <p><strong>Superpower:</strong> Can detect clumsiness from three rooms away.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gallery Page (UPDATED CONTENT) -->
+            <div id="gallery" class="page">
+                 <h1 class="font-chewy text-4xl md:text-5xl text-center mb-8 text-pink-600">Proof I Survive This Relationship 📸</h1>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
+                    <div class="card w-full h-64 perspective-1000 cursor-pointer"><div class="card-inner relative w-full h-full"><div class="absolute w-full h-full backface-hidden"><img src="https://placehold.co/400x400/FECACA/9F1239?text=Exhibit+A" alt="Exhibit A" class="w-full h-full object-cover rounded-xl shadow-lg"></div><div class="absolute w-full h-full backface-hidden rotate-y-180 bg-pink-400 text-white p-4 flex items-center justify-center rounded-xl shadow-lg"><p class="text-center text-lg font-semibold">This was her face after I spent 10 mins looking for my keys... which were in my hand. The laughter was deafening.</p></div></div></div>
+                    <div class="card w-full h-64 perspective-1000 cursor-pointer"><div class="card-inner relative w-full h-full"><div class="absolute w-full h-full backface-hidden"><img src="https://placehold.co/400x400/F9A8D4/831843?text=Exhibit+B" alt="Exhibit B" class="w-full h-full object-cover rounded-xl shadow-lg"></div><div class="absolute w-full h-full backface-hidden rotate-y-180 bg-pink-400 text-white p-4 flex items-center justify-center rounded-xl shadow-lg"><p class="text-center text-lg font-semibold">Here she's demonstrating my 'awesome' dance moves. According to her, I look like a confused flamingo. She's not wrong.</p></div></div></div>
+                    <div class="card w-full h-64 perspective-1000 cursor-pointer"><div class="card-inner relative w-full h-full"><div class="absolute w-full h-full backface-hidden"><img src="https://placehold.co/400x400/F0ABFC/701A75?text=Exhibit+C" alt="Exhibit C" class="w-full h-full object-cover rounded-xl shadow-lg"></div><div class="absolute w-full h-full backface-hidden rotate-y-180 bg-pink-400 text-white p-4 flex items-center justify-center rounded-xl shadow-lg"><p class="text-center text-lg font-semibold">The 'I told you so' look, perfected over years of me not listening. It's my second favorite look of hers.</p></div></div></div>
+                    <div class="card w-full h-64 perspective-1000 cursor-pointer"><div class="card-inner relative w-full h-full"><div class="absolute w-full h-full backface-hidden"><img src="https://placehold.co/400x400/D8B4FE/581C87?text=Exhibit+D" alt="Exhibit D" class="w-full h-full object-cover rounded-xl shadow-lg"></div><div class="absolute w-full h-full backface-hidden rotate-y-180 bg-pink-400 text-white p-4 flex items-center justify-center rounded-xl shadow-lg"><p class="text-center text-lg font-semibold">This is her trying not to laugh after I confidently gave wrong directions. We were lost for an hour, but at least we were lost together.</p></div></div></div>
+                </div>
+            </div>
+
+            <!-- Roast Zone Page (UPDATED CONTENT) -->
+            <div id="roast" class="page">
+                <h1 class="font-chewy text-4xl md:text-5xl text-center mb-8 text-pink-600">The Roast Carousel 🎠</h1>
+                <div class="max-w-2xl mx-auto bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
+                    <div class="carousel-container">
+                        <div id="roast-track" class="carousel-track">
+                            <!-- Roasts will be injected here by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Love Notes Page -->
+            <div id="love" class="page">
+                <h1 class="font-chewy text-4xl md:text-5xl text-center mb-8 text-pink-600">Okay Okay, I Do Love Her 😤❤️</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="love-note-card bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg group transition-all duration-500 hover:bg-pink-500 hover:text-white hover:shadow-2xl hover:-translate-y-2"><p class="text-gray-500 group-hover:text-pink-200 transition-colors text-lg">Yeah, she laughs at me constantly...</p><div class="h-px bg-pink-200 my-3"></div><p class="font-bold text-pink-600 group-hover:text-white transition-colors text-xl">...but that laugh is my absolute favorite sound.</p></div>
+                    <div class="love-note-card bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg group transition-all duration-500 hover:bg-pink-500 hover:text-white hover:shadow-2xl hover:-translate-y-2"><p class="text-gray-500 group-hover:text-pink-200 transition-colors text-lg">She annoys me 24/7...</p><div class="h-px bg-pink-200 my-3"></div><p class="font-bold text-pink-600 group-hover:text-white transition-colors text-xl">...but I honestly wouldn't trade her for anything.</p></div>
+                    <div class="love-note-card bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg group transition-all duration-500 hover:bg-pink-500 hover:text-white hover:shadow-2xl hover:-translate-y-2"><p class="text-gray-500 group-hover:text-pink-200 transition-colors text-lg">She thinks she's the funny one...</p><div class="h-px bg-pink-200 my-3"></div><p class="font-bold text-pink-600 group-hover:text-white transition-colors text-xl">...and okay, fine, she is. But she's also the kindest person I know.</p></div>
+                    <div class="love-note-card bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg group transition-all duration-500 hover:bg-pink-500 hover:text-white hover:shadow-2xl hover:-translate-y-2"><p class="text-gray-500 group-hover:text-pink-200 transition-colors text-lg">I lose every single argument...</p><div class="h-px bg-pink-200 my-3"></div><p class="font-bold text-pink-600 group-hover:text-white transition-colors text-xl">...but winning her over was the only victory I ever needed.</p></div>
+                </div>
+            </div>
+            
+            <!-- Extra Love Page -->
+            <div id="extra" class="page">
+                <h1 class="font-chewy text-4xl md:text-5xl text-center mb-8 text-pink-600">A Little Extra Love ✨</h1>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl text-center">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Unlock a Secret Message</h2>
+                        <p class="text-gray-600 mb-4">Click the heart 5 times to reveal it! 😉</p>
+                        <button id="unlock-heart-btn" class="text-6xl cursor-pointer transition-transform duration-200 hover:scale-110 active:scale-90">❤️🔒</button>
+                        <p id="click-counter" class="text-sm text-gray-400 mt-2 h-4"></p>
+                    </div>
+                    <div class="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl text-center">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Reasons I Love You</h2>
+                        <div id="reason-display" class="min-h-[6rem] flex items-center justify-center p-4 bg-pink-50 rounded-lg mb-4"><p class="text-pink-700 text-lg">Click the button for a compliment!</p></div>
+                        <button id="random-reason-btn" class="bg-pink-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-pink-600 transition-all">Feeling Nice? Click Me</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Page -->
+            <div id="contact" class="page"><h1 class="font-chewy text-4xl md:text-5xl text-center mb-8 text-pink-600">Send Me a Roast 💌</h1><div id="contact-form-container"><form id="contact-form" class="max-w-lg mx-auto bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl space-y-6"><div><label for="name" class="block text-sm font-medium text-gray-700 mb-1">What should I call you today?</label><input type="text" id="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500" placeholder="e.g., 'The Funnier One'"></div><div><label for="message" class="block text-sm font-medium text-gray-700 mb-1">Drop your roast. Or love note. Or pizza order.</label><textarea id="message" rows="5" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500" placeholder="e.g., 'You still use light mode? Yikes.'"></textarea></div><button type="submit" class="w-full bg-pink-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-pink-600 transition-all flex items-center justify-center space-x-2 text-xl hover:scale-105 active:scale-95"><span>Send Roast Missile</span><i data-lucide="send" class="w-5 h-5"></i></button></form></div><div id="success-message" class="hidden text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl max-w-lg mx-auto"><div class="text-6xl mb-4 animate-ping once">🚀</div><h2 class="text-3xl font-bold text-pink-600">Roast Missile Launched!</h2><p class="mt-4 text-lg">Thanks! I'll make sure she gets your message.</p><button id="send-another-btn" class="mt-6 bg-pink-500 text-white font-bold py-2 px-6 rounded-full hover:bg-pink-600 transition-all">Send Another</button></div></div>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Lucide Icons Activation ---
+        lucide.createIcons();
+
+        // --- 3D Background Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        const objects = [];
+
+        function createHeartShape() {
+            const shape = new THREE.Shape();
+            const x = -2.5, y = -5;
+            shape.moveTo(x + 2.5, y + 2.5);
+            shape.bezierCurveTo(x + 2.5, y + 2.5, x + 2, y, x, y);
+            shape.bezierCurveTo(x - 3, y, x - 3, y + 3.5, x - 3, y + 3.5);
+            shape.bezierCurveTo(x - 3, y + 5.5, x - 1.5, y + 7.7, x + 2.5, y + 9.5);
+            shape.bezierCurveTo(x + 6, y + 7.7, x + 8, y + 5.5, x + 8, y + 3.5);
+            shape.bezierCurveTo(x + 8, y + 3.5, x + 8, y, x + 5, y);
+            shape.bezierCurveTo(x + 3.5, y, x + 2.5, y + 2.5, x + 2.5, y + 2.5);
+            return shape;
+        }
+
+        const heartGeometry = new THREE.ShapeGeometry(createHeartShape());
+        const heartMaterial = new THREE.MeshBasicMaterial({ color: 0xec4899, opacity: 0.5, transparent: true });
+
+        for (let i = 0; i < 50; i++) {
+            const heart = new THREE.Mesh(heartGeometry, heartMaterial);
+            heart.position.set((Math.random() - 0.5) * 50, (Math.random() - 0.5) * 50, (Math.random() - 0.5) * 50);
+            heart.scale.set(0.1, 0.1, 0.1);
+            heart.rotation.z = Math.random() * Math.PI;
+            scene.add(heart);
+            objects.push(heart);
+        }
+        
+        camera.position.z = 20;
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            objects.forEach(obj => {
+                obj.rotation.y += 0.005;
+                obj.rotation.x += 0.005;
+            });
+            renderer.render(scene, camera);
+        }
+        animate3D();
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        document.body.onscroll = () => {
+            const t = document.body.getBoundingClientRect().top;
+            camera.position.z = 20 + t * -0.01;
+            camera.position.x = t * -0.0002;
+            camera.rotation.y = t * -0.0002;
+        }
+
+
+        // --- Page Navigation ---
+        const navButtons = document.querySelectorAll('.nav-button');
+        const pages = document.querySelectorAll('.page');
+        let currentPage = 'home';
+
+        function navigateTo(pageId) {
+            pages.forEach(page => page.classList.remove('active'));
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                currentPage = pageId;
+                updateNavButtons();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function updateNavButtons() {
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                const isMobile = btn.closest('#mobile-nav');
+                const isActive = btn.dataset.page === currentPage;
+                btn.classList.toggle(isMobile ? 'bg-pink-200' : 'bg-pink-500', isActive);
+                btn.classList.toggle(isMobile ? 'text-pink-700' : 'text-white', isActive);
+                btn.classList.toggle('shadow-md', isActive && !isMobile);
+                btn.classList.toggle('hover:bg-pink-100', !isActive);
+            });
+        }
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pageId = button.getAttribute('data-page');
+                navigateTo(pageId);
+                if(mobileMenu.classList.contains('block')) toggleMobileMenu();
+            });
+        });
+
+        // --- Mobile Menu Toggle ---
+        const menuToggle = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        function toggleMobileMenu() {
+            const isOpen = mobileMenu.classList.toggle('hidden');
+            mobileMenu.classList.toggle('block', !isOpen);
+            menuToggle.innerHTML = isOpen ? '<i data-lucide="menu" class="w-7 h-7"></i>' : '<i data-lucide="x" class="w-7 h-7"></i>';
+            lucide.createIcons();
+        }
+        menuToggle.addEventListener('click', toggleMobileMenu);
+
+        // --- Heart Trail Effect ---
+        document.addEventListener('mousemove', (e) => createHeartParticle(e.clientX, e.clientY, 'heart-trail'));
+        function createHeartParticle(x, y, className) {
+            const heart = document.createElement('div');
+            heart.className = `heart-particle ${className}`;
+            heart.innerHTML = '<i data-lucide="heart" class="w-5 h-5" style="fill: currentColor;"></i>';
+            document.body.appendChild(heart);
+            lucide.createIcons({ nodes: [heart.querySelector('i')] });
+            heart.style.left = `${x}px`; heart.style.top = `${y}px`;
+            if (className === 'heart-explosion') {
+                const angle = Math.random() * 2 * Math.PI; const radius = Math.random() * 50;
+                heart.style.animation = `explode 0.7s forwards`; heart.style.animationDelay = `${Math.random() * 0.2}s`;
+            }
+            setTimeout(() => heart.remove(), 1000);
+        }
+
+        // --- Heart Explosion on Love Notes ---
+        document.querySelectorAll('.love-note-card').forEach(card => {
+            card.addEventListener('mouseenter', (e) => { for (let i = 0; i < 15; i++) createHeartParticle(e.clientX, e.clientY, 'heart-explosion'); });
+        });
+
+        // --- Gallery Flip Cards ---
+        document.querySelectorAll('.card').forEach(card => card.addEventListener('click', () => card.classList.toggle('flipped')));
+
+        // --- Roast Carousel (UPDATED CONTENT) ---
+        const roasts = [
+  "Woh kehti hai ‘Main toh mature hoon’… aur 2 min baad ‘Tu mujhe gudiya laake de!’ 😂",
+  "Roz bolti hai ‘Mujhe sab pata hai’... par fir bhi surprise chahti hai jaise kuch nahi pata 🧐🎁",
+  "Main kuch ulta bolun toh turant ‘Tu baccha hai, tumhe kuch nahi samajhta’ 😤👶",
+  "Khud toh kehti hai ‘Main toh strong hoon’, par thoda late reply kar doon toh ‘Tum mujhse pyaar nahi karte na?’ 😢",
+  "‘Sote rehna tumhara hobby hai kya?’ – kehkar khud sabse zyada soyi hoti hai 😴❤️",
+  "Mujhe daantti hai ‘Baby jaise behave mat karo’... aur khud mujhe har baat pe baby banake rakhti hai 😌👶💕",
+  "‘Main tumse zyada samajhdar hoon’ – bas ye line roz sunta hoon jaise syllabus ka part ho 📚😅"
+];
+        const roastTrack = document.getElementById('roast-track');
+        roasts.forEach(roast => {
+            const slide = document.createElement('div');
+            slide.className = 'carousel-slide';
+            slide.innerHTML = `<p class="text-xl p-4 bg-pink-50 rounded-lg border-l-4 border-pink-300 text-center">${roast}</p>`;
+            roastTrack.appendChild(slide);
+        });
+        let roastIndex = 0;
+        setInterval(() => {
+            roastIndex = (roastIndex + 1) % roasts.length;
+            roastTrack.style.transform = `translateX(-${roastIndex * 100}%)`;
+        }, 6000); // Slowed down a bit for readability
+
+        // --- Contact Form ---
+        const contactForm = document.getElementById('contact-form'), formContainer = document.getElementById('contact-form-container'), successMessage = document.getElementById('success-message'), sendAnotherBtn = document.getElementById('send-another-btn');
+        contactForm.addEventListener('submit', (e) => { e.preventDefault(); formContainer.classList.add('hidden'); successMessage.classList.remove('hidden'); });
+        sendAnotherBtn.addEventListener('click', () => { successMessage.classList.add('hidden'); formContainer.classList.remove('hidden'); contactForm.reset(); });
+
+        // --- Personalized Greeting ---
+        function setGreeting() {
+            const now = new Date(); const hour = now.getHours(); const day = now.toLocaleDateString('en-US', { weekday: 'long' });
+            let timeOfDay; if (hour < 12) timeOfDay = 'morning'; else if (hour < 18) timeOfDay = 'afternoon'; else timeOfDay = 'evening';
+            document.getElementById('greeting-header').textContent = `Good ${timeOfDay}, Trouble!`;
+            document.getElementById('greeting-subheader').textContent = `Still thinking about me on this beautiful ${day}? 😉`;
+        }
+        setGreeting();
+
+        // --- Unlock the Love ---
+        const unlockBtn = document.getElementById('unlock-heart-btn'), clickCounterDisplay = document.getElementById('click-counter'), loveModal = document.getElementById('love-modal'), closeModalBtn = document.getElementById('close-modal-btn');
+        let clickCount = 0; const clicksNeeded = 5;
+        unlockBtn.addEventListener('click', () => {
+            clickCount++; const clicksRemaining = clicksNeeded - clickCount;
+            if (clicksRemaining > 0) { clickCounterDisplay.textContent = `${clicksRemaining} more click${clicksRemaining > 1 ? 's' : ''}...`; } 
+            else { clickCounterDisplay.textContent = ''; loveModal.classList.add('visible'); clickCount = 0; }
+        });
+        closeModalBtn.addEventListener('click', () => loveModal.classList.remove('visible'));
+        loveModal.addEventListener('click', (e) => { if (e.target === loveModal) loveModal.classList.remove('visible'); });
+
+        // --- Reasons I Love You Randomizer ---
+        const reasons = ["Because you laugh at my dumb jokes.", "Your smile could light up a city.", "You're smarter than me and I love it.", "How you can be so cute and so annoying at the same time.", "The way you look at me.", "You're my best friend.", "You always know how to make me feel better.", "Because you're unapologetically you."];
+        const reasonBtn = document.getElementById('random-reason-btn'), reasonDisplay = document.querySelector('#reason-display p');
+        reasonBtn.addEventListener('click', () => { const randomIndex = Math.floor(Math.random() * reasons.length); reasonDisplay.textContent = reasons[randomIndex]; });
+
+        // --- Background Music ---
+        const musicToggle = document.getElementById('music-toggle'); let musicPlaying = false;
+        const synth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "fatsawtooth" }, envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 0.8 } }).toDestination();
+        const melody = new Tone.Sequence((time, note) => { synth.triggerAttackRelease(note, "8n", time); }, ["C4", ["E4", "G4"], "A4", "G4"], "4n");
+        Tone.Transport.bpm.value = 80;
+        musicToggle.addEventListener('click', () => {
+            if (!musicPlaying) { Tone.start(); Tone.Transport.start(); melody.start(0); musicPlaying = true; musicToggle.innerHTML = '<i data-lucide="volume-2" class="w-6 h-6"></i>'; } 
+            else { Tone.Transport.stop(); melody.stop(); musicPlaying = false; musicToggle.innerHTML = '<i data-lucide="music" class="w-6 h-6"></i>'; }
+            lucide.createIcons();
+        });
+
+        // Initialize
+        updateNavButtons();
+    });
+    </script>
+</body>
+</html>
